@@ -13,6 +13,7 @@
 #include "esp_loader.h"
 
 #define UART_MIN(A,B) ((A) < (B) ? (A):(B))
+#define LOAD_MIN(A,B) ((A) < (B) ? (A):(B))
 
 #define SERIAL_MAX_BUFFER 1024 
 
@@ -27,7 +28,7 @@ int serial_set_block_flag(int fd, int value);
 int serial_get_in_queue_byte(int fd, int *byte_counts);
 int set_serial_para(int fd, unsigned int baud, int databit, int stopbit, int parity, int flow);
 int serial_set_baudrate(int fd, unsigned int baud);
-ssize_t serial_read_n( int fd, const uint8_t  *read_buffer, ssize_t read_size);
+ssize_t serial_read_n( int fd, const uint8_t  *read_buffer, ssize_t read_size, uint32_t timeout);
 ssize_t serial_write_n(int fd, const uint8_t  *write_buffer, ssize_t write_size);
 esp_loader_error_t loader_port_serial_write(int fd, const uint8_t *data, uint16_t size);
 esp_loader_error_t loader_port_serial_read(int fd, const uint8_t *data, uint16_t size, uint32_t timeout);

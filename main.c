@@ -1,17 +1,39 @@
+
+#include <stdint.h>
+#include <sys/stat.h>
 #include "serial.h"
 #include "serial_comm.h"
-#include <stdint.h>
 
 
+#define SERIAL_MAX_BLOCK  4096
+#define FILE_MAX_BUFFER 1024
+#define LOAD_APP_ADDRESS_START 0X10000
 
+static FILE *get_file_size(ssize_t *image_size)
+{
+	
+	FILE *fp = fopen("./load_bin/project_template.bin", "r");
+	if(fp == NULL)
+		return NULL;
+	fseek(fp, 0L, SEEK_END);
+	*image_size = ftell(fp);
+	rewind(fp);
+
+    printf("Image size: %lu\n", *image_size);
+
+    return fp;
+}
+
+static uint8_t payload[SERIAL_MAX_BLOCK];
 
 int main()
 {
-    unsigned char read_buffer[SERIAL_MAX_BUFFER] = {0};
-    unsigned char write_buffer[SERIAL_MAX_BUFFER] = "message from pc!!!";
+    //TEST
+    // unsigned char read_buffer[SERIAL_MAX_BUFFER] = {0};
+    // unsigned char write_buffer[SERIAL_MAX_BUFFER] = "message from pc!!!";
 
-    ssize_t send_len = -1;
-    ssize_t recv_len = -1;
+    // ssize_t send_len = -1;
+    // ssize_t recv_len = -1;
 
     int serial_fd = -1;
     if((serial_fd = serial_open("/dev/ttyUSB0")) == -1) {
@@ -26,12 +48,13 @@ int main()
         serial_close(serial_fd);
     }
 
-    sleep(1);
+    // sleep(1);
 
-    loader_port_reset_target(serial_fd);
+    // loader_port_reset_target(serial_fd);
 
-    sleep(1);
+    // sleep(1);
 #if 0
+    //TEST
     while(1) {
         if((send_len = serial_write_n(serial_fd, write_buffer, sizeof(write_buffer))) < 0) {
             // printf("send message fail!\n");
@@ -58,9 +81,8 @@ int main()
 #endif
 #if 1  //STEP1: SYNC 36 bytes: 0x07 0x07 0x12 0x20, followed by 32 x 0x55
     esp_loader_error_t err;
-    int32_t packet_number = 0;
 
-    sleep(2);
+    // sleep(2);
 
     esp_loader_connect_args_t connect_config = ESP_LOADER_CONNECT_DEFAULT();
     err = esp_loader_connect(serial_fd, &connect_config);
@@ -72,36 +94,178 @@ int main()
 
 #endif
 
+//STEP2: read some information from 
+#if 1 //read type of chip
+    // self.read_reg(0x3ff0005c) << 96 |
+    // self.read_reg(0x3ff00058) << 64 |
+    // self.read_reg(0x3ff00054) << 32 |
+    // self.read_reg(0x3ff00050)
+    uint32_t addr1 = 0;
+    uint32_t addr2 = 0;
+    uint32_t addr3 = 0;
+    uint32_t addr4 = 0;
+    uint32_t addr = 0;
+    err = loader_read_reg_cmd(serial_fd, 0x3ff0005c, &addr1);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Cannot read chip reg.\n");
+        return (0);
+    }
+
+    err = loader_read_reg_cmd(serial_fd, 0x3ff00058, &addr2);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Cannot read chip reg.\n");
+        return (0);
+    }
+
+    err = loader_read_reg_cmd(serial_fd, 0x3ff00054, &addr3);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Cannot read chip reg.\n");
+        return (0);
+    }
+
+    err = loader_read_reg_cmd(serial_fd, 0x3ff00050, &addr4);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Cannot read chip reg.\n");
+        return (0);
+    }
+
+    // self.read_reg(0x3ff0005c) << 96 |
+    // self.read_reg(0x3ff00058) << 64 |
+    // self.read_reg(0x3ff00054) << 32 |
+    // self.read_reg(0x3ff00050)
+    //addr = addr1 << 96 | addr2 << 64 | addr3 << 32 | addr4;
+    addr = addr4;
+
+    printf("is addr1!%d\n",addr1);
+    printf("is addr2!%d\n",addr2);
+    printf("is addr3!%d\n", addr3);
+    printf("is addr4!%d\n", addr4);
+    printf("is addr!!%d\n",addr);
+
+    // (efuses & ((1 << 4) | 1 << 80)) != 0 
+    if ((addr & ((1 << 4) | 1 << 80)) != 0) {
+        printf("is ESP8285!\n");
+    } else {
+        printf("is ESP8266!\n");
+    }
+    #endif
+
+    ////read mac
+
+    typedef uint32_t address;
+
+    address esp_otp_mac0 = 0x3ff00050;
+    address esp_otp_mac1 = 0x3ff00054;
+    address esp_otp_mac3 = 0x3ff0005c;
+
+    address addr_output1 ;
+    address addr_output2 ;
+    address addr_output3 ;
+
+    uint32_t mac0_value ;
+    uint32_t mac1_value ;
+    uint32_t mac3_value ;
+
+    // loader_read_reg_cmd(serial_fd, esp_otp_mac0, &mac0_value);
+    // loader_read_reg_cmd(serial_fd, esp_otp_mac1, &mac1_value);
+    // loader_read_reg_cmd(serial_fd, esp_otp_mac3, &mac3_value);
+
+    //read mac
+
+    err = loader_read_reg_cmd(serial_fd, esp_otp_mac0, &mac0_value);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Cannot read chip reg.\n");
+        return (0);
+    }
+
+    err = loader_read_reg_cmd(serial_fd, esp_otp_mac1, &mac1_value);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Cannot read chip reg.\n");
+        return (0);
+    }
+
+    err = loader_read_reg_cmd(serial_fd, esp_otp_mac3, &mac3_value);
+     if (err != ESP_LOADER_SUCCESS) {
+        printf("Cannot read chip reg.\n");
+        return (0);
+    }
+
+    if(mac3_value != 0) {
+        addr_output1 = (mac3_value >> 16) & 0xff;
+        addr_output2 = (mac3_value >> 8) & 0xff;
+        addr_output3 = mac3_value & 0xff;
+    } else if(((mac1_value >> 16) & 0xff) == 0){
+        addr_output1 = 0x18;
+        addr_output2 = 0xfe;
+        addr_output3 = 0x34;
+    } else if(((mac1_value >> 16) & 0xff) == 1){
+        addr_output1 = 0xac;
+        addr_output2 = 0xd0;
+        addr_output3 = 0x74;
+    } else {
+        printf("mac addr unknow\n");
+    }
+
+    printf("mac_addr: %02x,%02x,%02x,%02x,%02x,%02x\n",\
+            addr_output1,addr_output2,addr_output3, (mac1_value >> 8) & 0xff,\
+            mac1_value & 0xff, (mac0_value >> 24) & 0xff);
+
+//STEP3 update stub
 #if 0
-// self.read_reg(0x3ff0005c) << 96 |
-// self.read_reg(0x3ff00058) << 64 |
-// self.read_reg(0x3ff00054) << 32 |
-// self.read_reg(0x3ff00050)
-uint32_t addr1 = 0;
-uint32_t addr2 = 0;
-uint32_t addr3 = 0;
-uint32_t addr4 = 0;
-uint32_t addr = 0;
-loader_read_reg_cmd(serial_fd, 0x3ff0005c, &addr1);
-loader_read_reg_cmd(serial_fd, 0x3ff00058, &addr2);
-loader_read_reg_cmd(serial_fd, 0x3ff00054, &addr3);
-loader_read_reg_cmd(serial_fd, 0x3ff00050, &addr4);
-
-// (efuses & ((1 << 4) | 1 << 80)) != 0 
-addr = addr1 << 96 | addr2 << 64 | addr3 << 32 | addr4;
-
-if ((addr & ((1 << 4) | 1 << 80)) != 0) {
-    printf("is ESP8285!\n");
-} else {
-    printf("is ESP8266!\n");
-}
+    printf("Uploading stub text.bin...\n");
+    int text_bin_fd = -1;
+    text_bin_fd = open("./stub_code/text.bin", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IROTH);
+	if(text_bin_fd == -1) {
+		perror("open file error!");
+		return (0);
+    }
 #endif
-   //test
-//    while(1){
-//        loader_sync_cmd(serial_fd);
-//    }
 
+//STEP4 flash interaction
+printf("====================================================================\n");
 
+    int32_t packet_number = 0;
+    ssize_t load_bin_size = 0;
+    FILE *image = get_file_size(&load_bin_size);
+
+    printf("====================================================================\n");
+
+    err = esp_loader_flash_start(serial_fd, LOAD_APP_ADDRESS_START, load_bin_size, sizeof(payload));
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Flash start operation failed.\n");
+        return (0);
+    } 
+    while(load_bin_size > 0) {
+        ssize_t load_to_read = LOAD_MIN(load_bin_size, sizeof(payload));
+        ssize_t read = fread(payload, 1, load_to_read, image);
+        if (read != load_to_read) {
+            printf("Error occurred while reading file.\n");
+            return (0);
+        }
+
+        err = esp_loader_flash_write(serial_fd, payload, load_to_read);
+        if (err != ESP_LOADER_SUCCESS) {
+            printf("Packet could not be written.\n");
+            return (0);
+        }
+
+        printf("packet: %d  written: %lu B\n", packet_number++, load_to_read);
+
+        load_bin_size -= load_to_read;
+        
+    };
+
+    // 8266 ROM NOT SUPPORT md5 VERIFY
+    err = esp_loader_flash_verify(serial_fd);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("MD5 does not match. err: %d\n", err);
+        
+    }
+    printf("Flash verified\n");
+
+    
+
+    fclose(image);
     
     serial_close(serial_fd);
     return (0);
