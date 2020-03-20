@@ -307,6 +307,71 @@ esp_loader_error_t loader_flash_end_cmd(int fd, bool stay_in_loader)
     return send_cmd(fd, &end_cmd, sizeof(end_cmd), NULL);
 }
 
+//total size, number of data packets, data size in one packet, memory offset
+
+esp_loader_error_t loader_mem_begin_cmd(int fd, uint32_t mem_offset,
+                                          uint32_t total_size,
+                                          uint32_t block_size,
+                                          uint32_t nums_of_block)
+{
+    begin_command_t begin_cmd = {
+        .common = {
+            .direction = WRITE_DIRECTION,
+            .command = MEM_BEGIN,
+            .size = 16,
+            .checksum = 0
+        },
+        .erase_size = total_size,
+        .packet_count = nums_of_block,
+        .packet_size = block_size,
+        .offset = mem_offset
+    };
+
+    s_sequence_number = 0;
+
+    return send_cmd(fd, &begin_cmd, sizeof(begin_cmd), NULL);
+}
+
+esp_loader_error_t loader_mem_data_cmd(int fd, const uint8_t *data, uint32_t size)
+{
+    data_command_t data_cmd = {
+        .common = {
+            .direction = WRITE_DIRECTION,
+            .command = MEM_DATA,
+            .size = 16,
+            .checksum = compute_checksum(data, size)
+        },
+        .data_size = size,
+        .sequence_number = s_sequence_number++,
+        .zero_0 = 0,
+        .zero_1 = 0
+    };
+
+    return send_cmd_with_data(fd, &data_cmd, sizeof(data_cmd), data, size);
+}
+
+// typedef struct __attribute__((packed))
+// {
+//     command_common_t common;
+//     uint32_t stay_in_loader;
+//     uint32_t entry_point_address;
+// } mem_end_command_t;
+
+esp_loader_error_t loader_mem_end_cmd(int fd, bool stay_in_loader, uint32_t entry_point_address)
+{
+    mem_end_command_t end_cmd = {
+        .common = {
+            .direction = WRITE_DIRECTION,
+            .command = MEM_END,
+            .size = 4,
+            .checksum = 0
+        },
+        .stay_in_loader = stay_in_loader,
+        .entry_point_address = entry_point_address
+    };
+
+    return send_cmd(fd, &end_cmd, sizeof(end_cmd), NULL);
+}
 
 esp_loader_error_t loader_sync_cmd(int fd)
 {

@@ -6,9 +6,15 @@
 
 
 #define SERIAL_MAX_BLOCK  4096
+#define MEM_MAX_BLOCK  1024
 #define FILE_MAX_BUFFER 1024
-#define LOAD_APP_ADDRESS_START 0X10000
+#define LOAD_APP_ADDRESS_START 0x10000
 #define HIGHER_BAUD_RATE 921600
+
+#define STUB_CODE_TEXT_ADDR_START 0X4010E000
+#define STUB_CODE_DATA_ADDR_START 0x3FFFABA4
+
+#define ENTRY 0X4010E004
 
 static FILE *get_file_size(char *path, ssize_t *image_size)
 {
@@ -26,7 +32,8 @@ static FILE *get_file_size(char *path, ssize_t *image_size)
     return fp;
 }
 
-static uint8_t payload[SERIAL_MAX_BLOCK];
+static uint8_t payload_flash[SERIAL_MAX_BLOCK];
+static uint8_t payload_mem[MEM_MAX_BLOCK];
 
 int main()
 {
@@ -215,21 +222,88 @@ int main()
 //STEP3 update stub
 #if 1
     printf("Uploading stub text.bin...\n");
-
+    int32_t packet_number_mem = 0;
     ssize_t stub_text_len = 0;
     FILE *stub_text_bin =  get_file_size("./stub_code/text.bin", &stub_text_len);
     printf("stub_text_len:%lu\n",stub_text_len);
+    //fclose(stub_text_bin);
+    err = esp_loader_mem_start(serial_fd, STUB_CODE_TEXT_ADDR_START, stub_text_len, sizeof(payload_mem));
+    printf("err==%d\n",err);
+    if(err != ESP_LOADER_SUCCESS) {
+        printf("esp loader mem start fail!");
+    }
+
+    while(stub_text_len > 0) {
+        ssize_t to_read = READ_BIN_MIN(stub_text_len, sizeof(payload_mem));
+        ssize_t read = fread(payload_mem, 1, to_read, stub_text_bin);
+
+        if(read != to_read) {
+            printf("read the stub code text bin fail!\n");
+            return (0);
+        }
+
+        err = esp_loader_mem_write(serial_fd, payload_mem, to_read);
+        if(err = ESP_LOADER_SUCCESS) {
+            printf("the stub code text bin write to memory fail!\n");
+            return (0);
+        }
+        
+        printf("packet: %d  written: %lu B\n", packet_number_mem++, to_read);
+        stub_text_len -= to_read;
+    }
+
     fclose(stub_text_bin);
 
+    printf("Uploading stub data.bin...\n");
+
+    packet_number_mem = 0;
     ssize_t stub_data_len = 0;
     FILE *stub_data_bin =  get_file_size("./stub_code/data.bin", &stub_data_len);
     printf("stub_data_len:%lu\n",stub_data_len);
-    fclose(stub_data_bin);
+
+    err = esp_loader_mem_start(serial_fd, STUB_CODE_DATA_ADDR_START, stub_data_len, sizeof(payload_mem));
+    if(err != ESP_LOADER_SUCCESS) {
+        printf("esp loader mem start fail!");
+    }
 
     
+    while(stub_data_len > 0) {
+        memcmp(payload_mem, 0x0, sizeof(payload_mem));
+        ssize_t to_read = READ_BIN_MIN(stub_data_len, sizeof(payload_mem));
+        printf("to_read: %d\n", to_read);
+        ssize_t read = fread(payload_mem, 1, to_read, stub_data_bin);
+        printf("read: %d\n", read);
+
+        if(read != to_read) {
+            printf("read the stub code data bin fail!\n");
+            return (0);
+        }
+
+        err = esp_loader_mem_write(serial_fd, payload_mem, to_read);
+        if(err = ESP_LOADER_SUCCESS) {
+            printf("the stub code data bin write to memory fail!\n");
+            return (0);
+        }
+        
+        printf("packet: %d  written: %lu B\n", packet_number_mem++, to_read);
+        stub_text_len -= to_read;
+    }
+    fclose(stub_data_bin);
+
+    // err = esp_loader_mem_finish(serial_fd, false, ENTRY);
+    // if(err != ESP_LOADER_SUCCESS) {
+    //     printf("the stub code bin end!\n");
+    //         return (0);
+    // }
+    // while()
+    sleep(2);
 
 
 #endif
+    
+
+
+
 
 #ifdef ESP32
 
@@ -251,20 +325,20 @@ err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
     ssize_t load_bin_size = 0;
     FILE *image = get_file_size("./load_bin/esp8266/project_template.bin", &load_bin_size);
 
-    err = esp_loader_flash_start(serial_fd, LOAD_APP_ADDRESS_START, load_bin_size, sizeof(payload));
+    err = esp_loader_flash_start(serial_fd, LOAD_APP_ADDRESS_START, load_bin_size, sizeof(payload_flash));
     if (err != ESP_LOADER_SUCCESS) {
         printf("Flash start operation failed.\n");
         return (0);
     } 
     while(load_bin_size > 0) {
-        ssize_t load_to_read = LOAD_MIN(load_bin_size, sizeof(payload));
-        ssize_t read = fread(payload, 1, load_to_read, image);
+        ssize_t load_to_read = READ_BIN_MIN(load_bin_size, sizeof(payload_flash));
+        ssize_t read = fread(payload_flash, 1, load_to_read, image);
         if (read != load_to_read) {
             printf("Error occurred while reading file.\n");
             return (0);
         }
 
-        err = esp_loader_flash_write(serial_fd, payload, load_to_read);
+        err = esp_loader_flash_write(serial_fd, payload_flash, load_to_read);
         if (err != ESP_LOADER_SUCCESS) {
             printf("Packet could not be written.\n");
             return (0);

@@ -52,8 +52,9 @@ esp_loader_error_t loader_change_baudrate_cmd(int fd, uint32_t baudrate);
 
 esp_loader_error_t loader_md5_cmd(int fd, uint32_t address, uint32_t size, uint8_t *md5_out);
 
-// esp_loader_error_t loader_mem_begin_cmd(int fd, uint32_t offset, uint32_t erase_size, uint32_t block_size, uint32_t blocks_to_write);
-
+esp_loader_error_t loader_mem_begin_cmd(int fd, uint32_t mem_offset, uint32_t total_size, uint32_t block_size, uint32_t nums_of_block);
+esp_loader_error_t loader_mem_data_cmd(int fd, const uint8_t *data, uint32_t size);
+esp_loader_error_t loader_mem_end_cmd(int fd, bool stay_in_loader, uint32_t entry_point_address);
 
 #ifdef __cplusplus
 }

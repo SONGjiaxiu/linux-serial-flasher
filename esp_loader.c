@@ -142,6 +142,41 @@ esp_loader_error_t esp_loader_flash_finish(int fd, bool reboot)
     return loader_flash_end_cmd(fd, !reboot);
 }
 
+esp_loader_error_t esp_loader_mem_start(int fd, uint32_t mem_offset, uint32_t image_size, uint32_t block_size)
+{
+    uint32_t nums_of_block = (image_size + block_size -1) / block_size;
+    s_flash_write_size = block_size;
+
+    printf("nums_of_block:%d\n",nums_of_block);
+
+    init_md5(mem_offset, image_size);
+    loader_port_start_timer(DEFAULT_TIMEOUT);
+
+    return loader_mem_begin_cmd(fd, mem_offset, image_size, block_size, nums_of_block);
+}
+
+
+esp_loader_error_t esp_loader_mem_write(int fd, void *playload, uint32_t size)
+{
+    uint32_t padding_byte_numbers = s_flash_write_size - size;
+    uint8_t *data = (uint8_t *)playload;
+    uint32_t padding_index = size;
+
+
+    while(padding_byte_numbers--) {
+        data[padding_index++] = PADDING_PATTERN;
+    }
+
+    md5_update(data, ((size + 3) & ~3));
+    return loader_mem_data_cmd(fd, data, s_flash_write_size);
+}
+
+
+esp_loader_error_t esp_loader_mem_finish(int fd, bool reboot, uint32_t entry)
+{
+    return loader_flash_end_cmd(fd, !reboot);
+}
+
 
 esp_loader_error_t esp_loader_read_register(int fd, uint32_t address, uint32_t *reg_value)
 {

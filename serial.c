@@ -416,8 +416,8 @@ ssize_t serial_write_n(int fd, const uint8_t *write_buffer, ssize_t write_size)
 esp_loader_error_t loader_port_serial_write(int fd, const uint8_t *data, uint16_t size)
 {
     int write_len = serial_write_n(fd, data, size);
-    printf("write_len:%d------------------\n",write_len);
-    printf("write:data--------------------\n");
+    // printf("write_len:%d------------------\n",write_len);
+    // printf("write:data--------------------\n");
     for(int i=0; i < size; i++) {
         printf(" %02x ", data[i]);
     }
@@ -438,8 +438,8 @@ esp_loader_error_t loader_port_serial_read(int fd, const uint8_t *data, uint16_t
     // sleep(1);
     // int read_len = read(fd, (void *)data, size);
     ssize_t read_len = serial_read_n(fd, data, size, timeout);
-    printf("read_len:%ld------------------\n",read_len);
-    printf("read:data-----------------------\n");
+    // printf("read_len:%ld------------------\n",read_len);
+    // printf("read:data-----------------------\n");
     // for(int i=0; i < size; i++) {
     //     printf(" %02x ", data[i]);
     // }
