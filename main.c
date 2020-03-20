@@ -8,16 +8,18 @@
 #define SERIAL_MAX_BLOCK  4096
 #define FILE_MAX_BUFFER 1024
 #define LOAD_APP_ADDRESS_START 0X10000
+#define HIGHER_BAUD_RATE 921600
 
-static FILE *get_file_size(ssize_t *image_size)
+static FILE *get_file_size(char *path, ssize_t *image_size)
 {
-	
-	FILE *fp = fopen("./load_bin/project_template.bin", "r");
-	if(fp == NULL)
-		return NULL;
+	//"./load_bin/project_template.bin"
+	FILE *fp = fopen(path, "r");
+	if(fp == NULL) {
+        return NULL;
+    }
 	fseek(fp, 0L, SEEK_END);
-	*image_size = ftell(fp);
-	rewind(fp);
+    *image_size = ftell(fp);
+    rewind(fp);
 
     printf("Image size: %lu\n", *image_size);
 
@@ -211,24 +213,43 @@ int main()
             mac1_value & 0xff, (mac0_value >> 24) & 0xff);
 
 //STEP3 update stub
-#if 0
+#if 1
     printf("Uploading stub text.bin...\n");
-    int text_bin_fd = -1;
-    text_bin_fd = open("./stub_code/text.bin", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IROTH);
-	if(text_bin_fd == -1) {
-		perror("open file error!");
-		return (0);
-    }
+
+    ssize_t stub_text_len = 0;
+    FILE *stub_text_bin =  get_file_size("./stub_code/text.bin", &stub_text_len);
+    printf("stub_text_len:%lu\n",stub_text_len);
+    fclose(stub_text_bin);
+
+    ssize_t stub_data_len = 0;
+    FILE *stub_data_bin =  get_file_size("./stub_code/data.bin", &stub_data_len);
+    printf("stub_data_len:%lu\n",stub_data_len);
+    fclose(stub_data_bin);
+
+    
+
+
 #endif
 
-//STEP4 flash interaction
-printf("====================================================================\n");
+#ifdef ESP32
 
+err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Unable to change baud rate on target.\n");
+        return (0);
+    }
+
+    err = serial_set_baudrate(serial_fd,HIGHER_BAUD_RATE);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Unable to change baud rate.\n");
+        return (0);
+    }
+#endif
+//STEP4 flash interaction
+#if 0
     int32_t packet_number = 0;
     ssize_t load_bin_size = 0;
-    FILE *image = get_file_size(&load_bin_size);
-
-    printf("====================================================================\n");
+    FILE *image = get_file_size("./load_bin/esp8266/project_template.bin", &load_bin_size);
 
     err = esp_loader_flash_start(serial_fd, LOAD_APP_ADDRESS_START, load_bin_size, sizeof(payload));
     if (err != ESP_LOADER_SUCCESS) {
@@ -263,10 +284,9 @@ printf("====================================================================\n")
     }
     printf("Flash verified\n");
 
-    
-
     fclose(image);
-    
+#endif
+
     serial_close(serial_fd);
     return (0);
 }
