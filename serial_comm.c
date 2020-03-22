@@ -248,6 +248,21 @@ printf("check_response:%d\n",  __LINE__);
     return ESP_LOADER_SUCCESS;
 }
 
+static esp_loader_error_t check_response_mem_active_recv(int fd, void* resp, uint32_t resp_size)
+{
+    esp_loader_error_t err;
+    common_response_active_t *response = (common_response_active_t *)resp;
+    do {
+        err = SLIP_receive_packet(fd, resp, resp_size);
+        if (err != ESP_LOADER_SUCCESS) {
+            return err;
+        }
+    } while ((response->first_active != 0x4F) && (response->second_active != 0x48) && (response->third_active != 0x41) && (response->fourth_active != 0x49));
+
+    return ESP_LOADER_SUCCESS;
+
+}
+
 
 esp_loader_error_t loader_flash_begin_cmd(int fd, uint32_t offset,
                                           uint32_t erase_size,
@@ -363,7 +378,7 @@ esp_loader_error_t loader_mem_end_cmd(int fd, bool stay_in_loader, uint32_t entr
         .common = {
             .direction = WRITE_DIRECTION,
             .command = MEM_END,
-            .size = 4,
+            .size = 8,
             .checksum = 0
         },
         .stay_in_loader = stay_in_loader,
@@ -371,6 +386,12 @@ esp_loader_error_t loader_mem_end_cmd(int fd, bool stay_in_loader, uint32_t entr
     };
 
     return send_cmd(fd, &end_cmd, sizeof(end_cmd), NULL);
+}
+
+esp_loader_error_t loader_mem_active_recv(int fd)
+{
+    common_response_active_t response;
+    return check_response_mem_active_recv(fd, &response, sizeof(response));
 }
 
 esp_loader_error_t loader_sync_cmd(int fd)

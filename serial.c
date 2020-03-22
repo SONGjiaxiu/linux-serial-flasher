@@ -316,7 +316,7 @@ ssize_t serial_read_n( int fd, const uint8_t *read_buffer, ssize_t read_size, ui
     fd_set readfds;
     struct timeval tv;
 
-    tv.tv_sec = 2;
+    tv.tv_sec = 10;
     tv.tv_usec = 0;
     
 

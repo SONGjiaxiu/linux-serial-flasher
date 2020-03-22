@@ -21,7 +21,8 @@ static FILE *get_file_size(char *path, ssize_t *image_size)
 	//"./load_bin/project_template.bin"
 	FILE *fp = fopen(path, "r");
 	if(fp == NULL) {
-        return NULL;
+        printf("fopen fail!");
+        return (0);
     }
 	fseek(fp, 0L, SEEK_END);
     *image_size = ftell(fp);
@@ -235,8 +236,9 @@ int main()
 
     while(stub_text_len > 0) {
         ssize_t to_read = READ_BIN_MIN(stub_text_len, sizeof(payload_mem));
+        printf("to_read: %d\n", to_read);
         ssize_t read = fread(payload_mem, 1, to_read, stub_text_bin);
-
+        printf("read: %d\n", read);
         if(read != to_read) {
             printf("read the stub code text bin fail!\n");
             return (0);
@@ -255,6 +257,7 @@ int main()
     fclose(stub_text_bin);
 
     printf("Uploading stub data.bin...\n");
+    memcmp(payload_mem, 0x0, sizeof(payload_mem));
 
     packet_number_mem = 0;
     ssize_t stub_data_len = 0;
@@ -268,7 +271,7 @@ int main()
 
     
     while(stub_data_len > 0) {
-        memcmp(payload_mem, 0x0, sizeof(payload_mem));
+        // memcmp(payload_mem, 0x0, sizeof(payload_mem));
         ssize_t to_read = READ_BIN_MIN(stub_data_len, sizeof(payload_mem));
         printf("to_read: %d\n", to_read);
         ssize_t read = fread(payload_mem, 1, to_read, stub_data_bin);
@@ -286,16 +289,24 @@ int main()
         }
         
         printf("packet: %d  written: %lu B\n", packet_number_mem++, to_read);
-        stub_text_len -= to_read;
+        stub_data_len -= to_read;
     }
+
     fclose(stub_data_bin);
 
-    // err = esp_loader_mem_finish(serial_fd, false, ENTRY);
-    // if(err != ESP_LOADER_SUCCESS) {
-    //     printf("the stub code bin end!\n");
-    //         return (0);
-    // }
+    err = esp_loader_mem_finish(serial_fd, true, ENTRY);
+    if(err != ESP_LOADER_SUCCESS) {
+        printf("the stub code bin end!\n");
+            return (0);
+    }
     // while()
+    printf("stub code running?\n");
+    err = esp_loader_mem_active_recv(serial_fd);
+    if(err != ESP_LOADER_SUCCESS) {
+        printf("the sequence OHAI error!\n");
+            return (0);
+    }
+    printf("stub code running!\n");
     sleep(2);
 
 

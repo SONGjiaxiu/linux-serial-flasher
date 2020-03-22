@@ -174,7 +174,12 @@ esp_loader_error_t esp_loader_mem_write(int fd, void *playload, uint32_t size)
 
 esp_loader_error_t esp_loader_mem_finish(int fd, bool reboot, uint32_t entry)
 {
-    return loader_flash_end_cmd(fd, !reboot);
+    return loader_mem_end_cmd(fd, !reboot, entry);
+}
+
+esp_loader_error_t  esp_loader_mem_active_recv(int fd)
+{
+    return loader_mem_active_recv(fd);
 }
 
 
