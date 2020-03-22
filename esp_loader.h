@@ -115,6 +115,7 @@ esp_loader_error_t esp_loader_flash_finish(int fd, bool reboot);
 esp_loader_error_t esp_loader_mem_start(int fd, uint32_t mem_offset, uint32_t image_size, uint32_t block_size);
 esp_loader_error_t esp_loader_mem_write(int fd, void *playload, uint32_t size);
 esp_loader_error_t esp_loader_mem_finish(int fd, bool reboot, uint32_t entry);
+esp_loader_error_t  esp_loader_mem_active_recv(int fd);
 
 
 /**
