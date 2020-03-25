@@ -236,10 +236,10 @@ printf("check_response:%d\n",  __LINE__);
 
     response_status_t *status = (response_status_t *)(resp + resp_size - sizeof(response_status_t));
 
-    if (status->failed) {
-        log_loader_internal_error(status->error);
-        return ESP_LOADER_ERROR_INVALID_RESPONSE;
-    }
+        // if (status->failed) {
+        //     log_loader_internal_error(status->error);
+        //     return ESP_LOADER_ERROR_INVALID_RESPONSE;
+        // }
 printf("check_response:%d\n",  __LINE__);
     if (reg_value != NULL) {
         *reg_value = response->value;
@@ -302,7 +302,7 @@ esp_loader_error_t loader_flash_data_cmd(int fd, const uint8_t *data, uint32_t s
         .zero_0 = 0,
         .zero_1 = 0
     };
-
+    printf("compute_checksum in serial_comm.c:%lu\n", data_cmd.common.checksum);
     return send_cmd_with_data(fd, &data_cmd, sizeof(data_cmd), data, size);
 }
 

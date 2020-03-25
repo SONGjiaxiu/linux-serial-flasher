@@ -33,6 +33,7 @@ static const uint8_t  PADDING_PATTERN = 0xFF;
 
 
 static uint32_t s_flash_write_size = 0;
+#define MD5_ENABLED  1
 
 #if MD5_ENABLED
 
@@ -102,18 +103,29 @@ printf("ESP_LOADER_SUCCESS: %d\n",ESP_LOADER_SUCCESS);
     return err;
 }
 
+// rom
+// esp_loader_error_t esp_loader_flash_start(int fd, uint32_t offset, uint32_t image_size, uint32_t block_size)
+// {
+//     uint32_t blocks_to_write = (image_size + block_size - 1) / block_size;
+//     uint32_t erase_size = block_size * blocks_to_write;
+//     s_flash_write_size = block_size;
+
+//     init_md5(offset, image_size);
+
+//     loader_port_start_timer(timeout_per_mb(erase_size, ERASE_REGION_TIMEOUT_PER_MB));
+
+//     return loader_flash_begin_cmd(fd, offset, erase_size, block_size, blocks_to_write);
+// }
 
 esp_loader_error_t esp_loader_flash_start(int fd, uint32_t offset, uint32_t image_size, uint32_t block_size)
 {
     uint32_t blocks_to_write = (image_size + block_size - 1) / block_size;
-    uint32_t erase_size = block_size * blocks_to_write;
+    // uint32_t erase_size = block_size * blocks_to_write;
     s_flash_write_size = block_size;
 
     init_md5(offset, image_size);
 
-    loader_port_start_timer(timeout_per_mb(erase_size, ERASE_REGION_TIMEOUT_PER_MB));
-
-    return loader_flash_begin_cmd(fd, offset, erase_size, block_size, blocks_to_write);
+    return loader_flash_begin_cmd(fd, offset, image_size, block_size, blocks_to_write);
 }
 
 
