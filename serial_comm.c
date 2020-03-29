@@ -236,16 +236,31 @@ printf("check_response:%d\n",  __LINE__);
 
     response_status_t *status = (response_status_t *)(resp + resp_size - sizeof(response_status_t));
 
-    if (status->failed) {
-        log_loader_internal_error(status->error);
-        return ESP_LOADER_ERROR_INVALID_RESPONSE;
-    }
+        // if (status->failed) {
+        //     log_loader_internal_error(status->error);
+        //     return ESP_LOADER_ERROR_INVALID_RESPONSE;
+        // }
 printf("check_response:%d\n",  __LINE__);
     if (reg_value != NULL) {
         *reg_value = response->value;
     }
 
     return ESP_LOADER_SUCCESS;
+}
+
+static esp_loader_error_t check_response_mem_active_recv(int fd, void* resp, uint32_t resp_size)
+{
+    esp_loader_error_t err;
+    common_response_active_t *response = (common_response_active_t *)resp;
+    do {
+        err = SLIP_receive_packet(fd, resp, resp_size);
+        if (err != ESP_LOADER_SUCCESS) {
+            return err;
+        }
+    } while ((response->first_active != 0x4F) && (response->second_active != 0x48) && (response->third_active != 0x41) && (response->fourth_active != 0x49));
+
+    return ESP_LOADER_SUCCESS;
+
 }
 
 
@@ -287,7 +302,7 @@ esp_loader_error_t loader_flash_data_cmd(int fd, const uint8_t *data, uint32_t s
         .zero_0 = 0,
         .zero_1 = 0
     };
-
+    printf("compute_checksum in serial_comm.c:%lu\n", data_cmd.common.checksum);
     return send_cmd_with_data(fd, &data_cmd, sizeof(data_cmd), data, size);
 }
 
@@ -307,6 +322,77 @@ esp_loader_error_t loader_flash_end_cmd(int fd, bool stay_in_loader)
     return send_cmd(fd, &end_cmd, sizeof(end_cmd), NULL);
 }
 
+//total size, number of data packets, data size in one packet, memory offset
+
+esp_loader_error_t loader_mem_begin_cmd(int fd, uint32_t mem_offset,
+                                          uint32_t total_size,
+                                          uint32_t block_size,
+                                          uint32_t nums_of_block)
+{
+    begin_command_t begin_cmd = {
+        .common = {
+            .direction = WRITE_DIRECTION,
+            .command = MEM_BEGIN,
+            .size = 16,
+            .checksum = 0
+        },
+        .erase_size = total_size,
+        .packet_count = nums_of_block,
+        .packet_size = block_size,
+        .offset = mem_offset
+    };
+
+    s_sequence_number = 0;
+
+    return send_cmd(fd, &begin_cmd, sizeof(begin_cmd), NULL);
+}
+
+esp_loader_error_t loader_mem_data_cmd(int fd, const uint8_t *data, uint32_t size)
+{
+    data_command_t data_cmd = {
+        .common = {
+            .direction = WRITE_DIRECTION,
+            .command = MEM_DATA,
+            .size = 16,
+            .checksum = compute_checksum(data, size)
+        },
+        .data_size = size,
+        .sequence_number = s_sequence_number++,
+        .zero_0 = 0,
+        .zero_1 = 0
+    };
+
+    return send_cmd_with_data(fd, &data_cmd, sizeof(data_cmd), data, size);
+}
+
+// typedef struct __attribute__((packed))
+// {
+//     command_common_t common;
+//     uint32_t stay_in_loader;
+//     uint32_t entry_point_address;
+// } mem_end_command_t;
+
+esp_loader_error_t loader_mem_end_cmd(int fd, bool stay_in_loader, uint32_t entry_point_address)
+{
+    mem_end_command_t end_cmd = {
+        .common = {
+            .direction = WRITE_DIRECTION,
+            .command = MEM_END,
+            .size = 8,
+            .checksum = 0
+        },
+        .stay_in_loader = stay_in_loader,
+        .entry_point_address = entry_point_address
+    };
+
+    return send_cmd(fd, &end_cmd, sizeof(end_cmd), NULL);
+}
+
+esp_loader_error_t loader_mem_active_recv(int fd)
+{
+    common_response_active_t response;
+    return check_response_mem_active_recv(fd, &response, sizeof(response));
+}
 
 esp_loader_error_t loader_sync_cmd(int fd)
 {

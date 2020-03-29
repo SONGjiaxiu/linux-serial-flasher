@@ -78,6 +78,7 @@ esp_loader_error_t esp_loader_connect(int fd, esp_loader_connect_args_t *connect
   */
 esp_loader_error_t esp_loader_flash_start(int fd, uint32_t offset, uint32_t image_size, uint32_t block_size);
 
+
 /**
   * @brief Writes supplied data to target's flash memory.
   *
@@ -107,6 +108,15 @@ esp_loader_error_t esp_loader_flash_write(int fd, void *payload, uint32_t size);
   *     - ESP_LOADER_ERROR_INVALID_RESPONSE Internal error
   */
 esp_loader_error_t esp_loader_flash_finish(int fd, bool reboot);
+
+
+
+
+esp_loader_error_t esp_loader_mem_start(int fd, uint32_t mem_offset, uint32_t image_size, uint32_t block_size);
+esp_loader_error_t esp_loader_mem_write(int fd, void *playload, uint32_t size);
+esp_loader_error_t esp_loader_mem_finish(int fd, bool reboot, uint32_t entry);
+esp_loader_error_t  esp_loader_mem_active_recv(int fd);
+
 
 /**
   * @brief Writes register.

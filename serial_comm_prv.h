@@ -156,6 +156,15 @@ typedef struct __attribute__((packed))
 
 typedef struct __attribute__((packed))
 {
+    uint8_t first_active;
+    uint8_t second_active;    
+    uint8_t third_active;
+    uint8_t fourth_active;
+} common_response_active_t;
+
+
+typedef struct __attribute__((packed))
+{
     uint8_t failed;
     uint8_t error;
     // uint8_t reserved_0; // ESP32 ROM only

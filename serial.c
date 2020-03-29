@@ -212,13 +212,13 @@ int set_serial_para(int fd, unsigned int baud, int databit, int stopbit, int par
     options.c_oflag = 0;                                    /* 非加工方式输出 */
     options.c_lflag = 0;                                    /* 非加工方式 */
 
-options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+// options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
 // options.c_oflag &= ~OPOST; 
 
 // 如果串口输入队列没有数据，程序将在read调用处阻塞 */
 
-    options.c_cc[VMIN] = 1;
-    options.c_cc[VTIME] = 1;
+    options.c_cc[VMIN] = 0;
+    options.c_cc[VTIME] = 0;
 
     if (tcsetattr(fd, TCSANOW, &options) == -1){
         return(-1);
@@ -316,8 +316,9 @@ ssize_t serial_read_n( int fd, const uint8_t *read_buffer, ssize_t read_size, ui
     fd_set readfds;
     struct timeval tv;
 
-    tv.tv_sec = 5;
+    tv.tv_sec = 10;
     tv.tv_usec = 0;
+    
 
     FD_ZERO(&readfds);
     FD_SET(fd,&readfds);
@@ -415,10 +416,10 @@ ssize_t serial_write_n(int fd, const uint8_t *write_buffer, ssize_t write_size)
 esp_loader_error_t loader_port_serial_write(int fd, const uint8_t *data, uint16_t size)
 {
     int write_len = serial_write_n(fd, data, size);
-    printf("write_len:%d------------------\n",write_len);
-    printf("write:data--------------------\n");
+    // printf("write_len:%d------------------\n",write_len);
+    // printf("write:data--------------------\n");
     for(int i=0; i < size; i++) {
-        printf("-%02x-", data[i]);
+        printf(" %02x ", data[i]);
     }
     printf("\n");
 
@@ -437,12 +438,12 @@ esp_loader_error_t loader_port_serial_read(int fd, const uint8_t *data, uint16_t
     // sleep(1);
     // int read_len = read(fd, (void *)data, size);
     ssize_t read_len = serial_read_n(fd, data, size, timeout);
-    printf("read_len:%ld------------------\n",read_len);
-    printf("read:data-----------------------\n");
-    for(int i=0; i < size; i++) {
-        printf("-%02x-", data[i]);
-    }
-    printf("\n");
+    // printf("read_len:%ld------------------\n",read_len);
+    // printf("read:data-----------------------\n");
+    // for(int i=0; i < size; i++) {
+    //     printf(" %02x ", data[i]);
+    // }
+    // printf("\n");
 
     // if(timeout == 0) {
     //     return ESP_LOADER_ERROR_FAIL;

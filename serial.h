@@ -13,7 +13,7 @@
 #include "esp_loader.h"
 
 #define UART_MIN(A,B) ((A) < (B) ? (A):(B))
-#define LOAD_MIN(A,B) ((A) < (B) ? (A):(B))
+#define READ_BIN_MIN(A,B) ((A) < (B) ? (A):(B))
 
 #define SERIAL_MAX_BUFFER 1024 
 
