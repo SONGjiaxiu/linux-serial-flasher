@@ -236,10 +236,10 @@ printf("check_response:%d\n",  __LINE__);
 
     response_status_t *status = (response_status_t *)(resp + resp_size - sizeof(response_status_t));
 
-    if (status->failed) {
-        log_loader_internal_error(status->error);
-        return ESP_LOADER_ERROR_INVALID_RESPONSE;
-    }
+        if (status->failed) {
+            log_loader_internal_error(status->error);
+            return ESP_LOADER_ERROR_INVALID_RESPONSE;
+        }
 printf("check_response:%d\n",  __LINE__);
     if (reg_value != NULL) {
         *reg_value = response->value;
@@ -294,7 +294,7 @@ esp_loader_error_t loader_flash_data_cmd(int fd, const uint8_t *data, uint32_t s
         .common = {
             .direction = WRITE_DIRECTION,
             .command = FLASH_DATA,
-            .size = 16,
+            .size = 16 + size,
             .checksum = compute_checksum(data, size)
         },
         .data_size = size,
@@ -302,7 +302,7 @@ esp_loader_error_t loader_flash_data_cmd(int fd, const uint8_t *data, uint32_t s
         .zero_0 = 0,
         .zero_1 = 0
     };
-
+    printf("compute_checksum in serial_comm.c:%u\n", data_cmd.common.checksum);
     return send_cmd_with_data(fd, &data_cmd, sizeof(data_cmd), data, size);
 }
 
@@ -378,7 +378,7 @@ esp_loader_error_t loader_mem_end_cmd(int fd, bool stay_in_loader, uint32_t entr
         .common = {
             .direction = WRITE_DIRECTION,
             .command = MEM_END,
-            .size = 4,
+            .size = 8,
             .checksum = 0
         },
         .stay_in_loader = stay_in_loader,
@@ -478,7 +478,7 @@ esp_loader_error_t loader_change_baudrate_cmd(int fd, uint32_t baudrate)
             .checksum = 0
         },
         .new_baudrate = baudrate,
-        .old_baudrate = 0 // ESP32 ROM only
+        .old_baudrate = 115200 
     };
 
     return send_cmd(fd, &baudrate_cmd, sizeof(baudrate_cmd), NULL);

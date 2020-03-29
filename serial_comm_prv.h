@@ -28,7 +28,7 @@ extern "C" {
 #define READ_DIRECTION  1
 #define WRITE_DIRECTION 0
 
-#define MD5_SIZE 32
+#define MD5_SIZE 16
 
 typedef enum __attribute__((packed))
 {

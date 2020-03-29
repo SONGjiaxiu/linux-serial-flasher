@@ -5,7 +5,8 @@
 #include "serial_comm.h"
 
 
-#define SERIAL_MAX_BLOCK  4096
+#define SERIAL_MAX_BLOCK  16384
+// #define SERIAL_MAX_BLOCK  45506
 #define MEM_MAX_BLOCK  1024
 #define FILE_MAX_BUFFER 1024
 #define LOAD_APP_ADDRESS_START 0x10000
@@ -15,6 +16,17 @@
 #define STUB_CODE_DATA_ADDR_START 0x3FFFABA4
 
 #define ENTRY 0X4010E004
+
+static uint8_t compute_checksum(const uint8_t *data, uint32_t size)
+{
+    uint8_t checksum = 0xEF;
+
+    while (size--) {
+        checksum ^= *data++;
+    }
+
+    return checksum;
+}
 
 static FILE *get_file_size(char *path, ssize_t *image_size)
 {
@@ -294,7 +306,8 @@ int main()
 
     fclose(stub_data_bin);
 
-    err = esp_loader_mem_finish(serial_fd, false, ENTRY);
+
+    err = esp_loader_mem_finish(serial_fd, true, ENTRY);
     if(err != ESP_LOADER_SUCCESS) {
         printf("the stub code bin end!\n");
             return (0);
@@ -307,30 +320,75 @@ int main()
             return (0);
     }
     printf("stub code running!\n");
-    sleep(2);
 
 
 #endif
     
 
 
-
-
-#ifdef ESP32
-
-err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
+    err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
     if (err != ESP_LOADER_SUCCESS) {
         printf("Unable to change baud rate on target.\n");
         return (0);
     }
 
-    err = serial_set_baudrate(serial_fd,HIGHER_BAUD_RATE);
+    err = serial_set_baudrate(serial_fd, HIGHER_BAUD_RATE);
     if (err != ESP_LOADER_SUCCESS) {
         printf("Unable to change baud rate.\n");
         return (0);
     }
+
+    loader_port_delay_ms(21);
+
+//STEP4 flash interaction esp8266 stub loader test
+#if 1
+    int32_t packet_number = 0;
+    ssize_t load_bin_size = 0;
+    FILE *image = get_file_size("./load_bin/esp8266/project_template.bin", &load_bin_size);
+
+    err = esp_loader_flash_start(serial_fd, LOAD_APP_ADDRESS_START, load_bin_size, sizeof(payload_flash));
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("Flash start operation failed.\n");
+        return (0);
+    }
+    int send_times = 0;
+    while(load_bin_size > 0) {
+        memset(payload_flash,0x0,sizeof(payload_flash));
+        ssize_t load_to_read = READ_BIN_MIN(load_bin_size, sizeof(payload_flash));
+        printf("load_to_read:%lu\n",load_to_read);
+        ssize_t read = fread(payload_flash, 1, load_to_read, image);
+        printf("read:%lu\n",read);
+        if (read != load_to_read) {
+            printf("Error occurred while reading file.\n");
+            return (0);
+        }
+        send_times++;
+        printf("send_times=%d\n",send_times);
+        printf("compute_checksum in main:%lu\n", compute_checksum(payload_flash,load_to_read));
+        err = esp_loader_flash_write(serial_fd, payload_flash, load_to_read);
+        printf("stub loader err=%d\n",err);
+        if (err != ESP_LOADER_SUCCESS) {
+            printf("Packet could not be written.\n");
+            return (0);
+        }
+        printf("send_times=%d\n",send_times);
+        printf("packet: %d  written: %lu B\n", packet_number++, load_to_read);
+
+        load_bin_size -= load_to_read;
+    };
+
+    printf("Flash write done.\n");
+    err = esp_loader_flash_verify(serial_fd);
+    if (err != ESP_LOADER_SUCCESS) {
+        printf("MD5 does not match. err: %d\n", err);
+    }
+    printf("Flash verified\n");
+
+
+
+
 #endif
-//STEP4 flash interaction
+//STEP4 flash interaction esp8266 rom loader
 #if 0
     int32_t packet_number = 0;
     ssize_t load_bin_size = 0;
