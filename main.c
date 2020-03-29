@@ -332,6 +332,7 @@ int main()
         return (0);
     }
 
+
     err = serial_set_baudrate(serial_fd, HIGHER_BAUD_RATE);
     if (err != ESP_LOADER_SUCCESS) {
         printf("Unable to change baud rate.\n");
