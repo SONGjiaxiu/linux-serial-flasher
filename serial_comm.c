@@ -70,13 +70,14 @@ static esp_loader_error_t SLIP_receive_data(int fd, uint8_t *buff, uint32_t size
             }
         } else {
             buff[i] = ch;
+            printf("-%02x-", buff[i]);
         }
     }
-    printf("recv:data-----------------------\n");
-    for(int i=0; i < size; i++) {
-        printf("-%02x-", buff[i]);
-    }
-    printf("\n");
+    // printf("recv:data-----------------------\n");
+    // for(int i=0; i < size; i++) {
+    //     printf("-%02x-", buff[i]);
+    // }
+    // printf("\n");
 
     return ESP_LOADER_SUCCESS;
 }
@@ -94,7 +95,7 @@ static esp_loader_error_t SLIP_receive_packet(int fd, uint8_t *buff, uint32_t si
             return err;
         }
     } while (ch != DELIMITER);
-printf("***********************recv:ch:%02x--------\n",ch);
+// printf("***********************recv:ch:%02x--------\n",ch);
     RETURN_ON_ERROR( SLIP_receive_data(fd, buff, size) );
 
     // Delimiter
@@ -190,7 +191,24 @@ static esp_loader_error_t send_cmd_md5(int fd, const void *cmd_data, size_t cmd_
 
     RETURN_ON_ERROR( check_response(fd, command, NULL, &response, sizeof(response)) );
 
+    {
+        printf("md5:=begin\n");
+        for(int i = 0; i < MD5_SIZE; i++)
+        {
+            printf("=%02x",response.md5[i]);
+        }
+        printf("md5:after\n");
+    }
+    memset(md5_out, 0x0, MD5_SIZE);
     memcpy(md5_out, response.md5, MD5_SIZE);
+       {
+        printf("md5out:=begin\n");
+        for(int i = 0; i < MD5_SIZE; i++)
+        {
+            printf("=%02x",md5_out[i]);
+        }
+        printf("md5outer\n");
+    }
 
     return ESP_LOADER_SUCCESS;
 }
@@ -217,14 +235,11 @@ static void log_loader_internal_error(error_code_t error)
 
 static esp_loader_error_t check_response(int fd, command_t cmd, uint32_t *reg_value, void* resp, uint32_t resp_size)
 {
-printf("check_response:%d\n",  __LINE__);
+// printf("check_response:%d\n",  __LINE__);
     esp_loader_error_t err;
-printf("check_response:%d\n",  __LINE__);
+// printf("check_response:%d\n",  __LINE__);
     common_response_t *response = (common_response_t *)resp;
 
-
-printf("resp_size--%d--\n", resp_size);
-printf("check_response:%d\n",  __LINE__);
     do {
         err = SLIP_receive_packet(fd, resp, resp_size);
         if (err != ESP_LOADER_SUCCESS) {

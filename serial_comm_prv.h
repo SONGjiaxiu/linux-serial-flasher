@@ -180,7 +180,7 @@ typedef struct __attribute__((packed))
 typedef struct __attribute__((packed))
 {
     common_response_t common;
-    uint8_t md5[MD5_SIZE];     // ROM only
+    uint8_t md5[MD5_SIZE];     
     response_status_t status;
 } rom_md5_response_t;
 

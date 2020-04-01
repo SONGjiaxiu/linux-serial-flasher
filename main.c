@@ -312,7 +312,7 @@ int main()
         printf("the stub code bin end!\n");
             return (0);
     }
-    // while()
+    
     printf("stub code running?\n");
     err = esp_loader_mem_active_recv(serial_fd);
     if(err != ESP_LOADER_SUCCESS) {

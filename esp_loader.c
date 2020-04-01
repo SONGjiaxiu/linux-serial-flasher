@@ -247,11 +247,35 @@ esp_loader_error_t esp_loader_flash_verify(int fd)
     md5_final(raw_md5);
     hexify(raw_md5, hex_md5);
 
+    printf("2=========================Actual:\n");
+    printf("%s\n",(char*)hex_md5);
+
     loader_port_start_timer(timeout_per_mb(s_image_size, MD5_TIMEOUT_PER_MB));
 
-    RETURN_ON_ERROR( loader_md5_cmd(fd, s_start_address, s_image_size, received_md5) );
+    RETURN_ON_ERROR( loader_md5_cmd(fd, s_start_address, s_image_size, &received_md5) );
 
-    bool md5_match = memcmp(hex_md5, received_md5, MD5_SIZE) == 0;
+    bool md5_match = memcmp(raw_md5, received_md5, MD5_SIZE) == 0;
+
+    {
+        printf("md5:=hex_md5\n");
+        for(int i = 0; i < MD5_SIZE; i++)
+        {
+            printf("=%02x",hex_md5[i]);
+        }
+        printf("md5:hex_md5\n");
+    }
+   
+       {
+        printf("raw_md5:=begin\n");
+        for(int i = 0; i < MD5_SIZE; i++)
+        {
+            printf("=%02x",raw_md5[i]);
+        }
+        printf("raw_md5\n");
+    }
+
+    printf("3Actual:\n");
+    printf("%s\n",(char*)received_md5);
     
     if(!md5_match) {
         hex_md5[MD5_SIZE] = '\n';

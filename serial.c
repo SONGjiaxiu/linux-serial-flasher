@@ -212,8 +212,12 @@ int set_serial_para(int fd, unsigned int baud, int databit, int stopbit, int par
     options.c_oflag = 0;                                    /* 非加工方式输出 */
     options.c_lflag = 0;                                    /* 非加工方式 */
 
+    options.c_iflag &= ~(ICRNL | IXON);
 // options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+// options.c_lflag &= ~(ICANON | ECHO | ECHOE ); 
 // options.c_oflag &= ~OPOST; 
+	
+
 
 // 如果串口输入队列没有数据，程序将在read调用处阻塞 */
 
@@ -285,6 +289,13 @@ int serial_set_baudrate(int fd, unsigned int baud)
     /* 清空串口输入输出队列 */
     tcflush( fd, TCOFLUSH );
     tcflush( fd, TCIFLUSH );
+
+    options.c_cflag |= CREAD;                               /* 启用接收器 */
+    options.c_iflag |= IGNBRK;                              /* 忽略输入行的终止条件 */
+    options.c_oflag = 0;                                    /* 非加工方式输出 */
+    options.c_lflag = 0;                                    /* 非加工方式 */
+    // options.c_lflag &= ~(ICANON | ECHO | ECHOE); 
+    options.c_iflag &= ~(ICRNL | IXON);
 
     if (tcsetattr( fd, TCSANOW, &options ) == -1){
         tcsetattr( fd, TCSANOW, &old_options );
