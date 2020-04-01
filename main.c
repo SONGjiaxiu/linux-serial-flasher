@@ -5,7 +5,7 @@
 #include "serial_comm.h"
 
 
-#define SERIAL_MAX_BLOCK  16384
+#define SERIAL_MAX_BLOCK  0x4000
 // #define SERIAL_MAX_BLOCK  45506
 #define MEM_MAX_BLOCK  1024
 #define FILE_MAX_BUFFER 1024
@@ -319,17 +319,12 @@ int main()
             return (0);
     }
     printf("stub code running!\n");
-    
+    sleep(2);
 
 #endif
     
-
-
-
-
-#ifdef ESP32
-
-err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
+//Changing baud rate to 921600
+    err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
     if (err != ESP_LOADER_SUCCESS) {
         printf("Unable to change baud rate on target.\n");
         return (0);
@@ -340,9 +335,11 @@ err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
         printf("Unable to change baud rate.\n");
         return (0);
     }
-#endif
+
+    // loader_port_delay_ms(21); 
+
 //STEP4 flash interaction esp8266 stub loader test
-#if 1
+#if 0
     int32_t packet_number = 0;
     ssize_t load_bin_size = 0;
     FILE *image = get_file_size("./load_bin/esp8266/project_template.bin", &load_bin_size);

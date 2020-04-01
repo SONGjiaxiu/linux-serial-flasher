@@ -236,10 +236,10 @@ printf("check_response:%d\n",  __LINE__);
 
     response_status_t *status = (response_status_t *)(resp + resp_size - sizeof(response_status_t));
 
-        // if (status->failed) {
-        //     log_loader_internal_error(status->error);
-        //     return ESP_LOADER_ERROR_INVALID_RESPONSE;
-        // }
+        if (status->failed) {
+            log_loader_internal_error(status->error);
+            return ESP_LOADER_ERROR_INVALID_RESPONSE;
+        }
 printf("check_response:%d\n",  __LINE__);
     if (reg_value != NULL) {
         *reg_value = response->value;
