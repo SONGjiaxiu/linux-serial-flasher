@@ -190,25 +190,28 @@ static esp_loader_error_t send_cmd_md5(int fd, const void *cmd_data, size_t cmd_
     RETURN_ON_ERROR( SLIP_send_delimiter(fd) );
 
     RETURN_ON_ERROR( check_response(fd, command, NULL, &response, sizeof(response)) );
-
-    {
-        printf("md5:=begin\n");
-        for(int i = 0; i < MD5_SIZE; i++)
-        {
-            printf("=%02x",response.md5[i]);
-        }
-        printf("md5:after\n");
-    }
+    
+    //debug
+    // {
+    //     printf("md5:=begin\n");
+    //     for(int i = 0; i < MD5_SIZE; i++)
+    //     {
+    //         printf("=%02x",response.md5[i]);
+    //     }
+    //     printf("md5:after\n");
+    // }
     memset(md5_out, 0x0, MD5_SIZE);
     memcpy(md5_out, response.md5, MD5_SIZE);
-       {
-        printf("md5out:=begin\n");
-        for(int i = 0; i < MD5_SIZE; i++)
-        {
-            printf("=%02x",md5_out[i]);
-        }
-        printf("md5outer\n");
-    }
+
+    //debug
+    // {
+    //     printf("md5out:=begin\n");
+    //     for(int i = 0; i < MD5_SIZE; i++)
+    //     {
+    //         printf("=%02x",md5_out[i]);
+    //     }
+    //     printf("md5outer\n");
+    // }
 
     return ESP_LOADER_SUCCESS;
 }

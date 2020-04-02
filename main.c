@@ -17,6 +17,8 @@
 
 #define ENTRY 0X4010E004
 
+#define ENABLE_STUB_LOADER 1
+
 static uint8_t compute_checksum(const uint8_t *data, uint32_t size)
 {
     uint8_t checksum = 0xEF;
@@ -233,7 +235,7 @@ int main()
             mac1_value & 0xff, (mac0_value >> 24) & 0xff);
 
 //STEP3 update stub
-#if 1
+#if ENABLE_STUB_LOADER
     printf("Uploading stub text.bin...\n");
     int32_t packet_number_mem = 0;
     ssize_t stub_text_len = 0;
@@ -281,7 +283,6 @@ int main()
         printf("esp loader mem start fail!");
     }
 
-    
     while(stub_data_len > 0) {
         // memcmp(payload_mem, 0x0, sizeof(payload_mem));
         ssize_t to_read = READ_BIN_MIN(stub_data_len, sizeof(payload_mem));
@@ -306,7 +307,6 @@ int main()
 
     fclose(stub_data_bin);
 
-
     err = esp_loader_mem_finish(serial_fd, true, ENTRY);
     if(err != ESP_LOADER_SUCCESS) {
         printf("the stub code bin end!\n");
@@ -323,9 +323,8 @@ int main()
 
 
 #endif
-    
 
-
+    // change baudrate
     err = esp_loader_change_baudrate(serial_fd,HIGHER_BAUD_RATE);
     if (err != ESP_LOADER_SUCCESS) {
         printf("Unable to change baud rate on target.\n");
@@ -341,8 +340,8 @@ int main()
 
     loader_port_delay_ms(21);
 
-//STEP4 flash interaction esp8266 stub loader test
-#if 1
+    //STEP4 flash interaction esp8266 stub loader
+#if ENABLE_STUB_LOADER
     int32_t packet_number = 0;
     ssize_t load_bin_size = 0;
     FILE *image = get_file_size("./load_bin/esp8266/project_template.bin", &load_bin_size);
@@ -384,13 +383,11 @@ int main()
         printf("MD5 does not match. err: %d\n", err);
     }
     printf("Flash verified\n");
+    fclose(image);
 
+#elif
 
-
-
-#endif
-//STEP4 flash interaction esp8266 rom loader
-#if 0
+    //STEP4 flash interaction esp8266 rom loader
     int32_t packet_number = 0;
     ssize_t load_bin_size = 0;
     FILE *image = get_file_size("./load_bin/esp8266/project_template.bin", &load_bin_size);

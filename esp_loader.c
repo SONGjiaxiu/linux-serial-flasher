@@ -239,7 +239,6 @@ static void hexify(const uint8_t raw_md5[16], uint8_t hex_md5_out[32])
 
 esp_loader_error_t esp_loader_flash_verify(int fd)
 {
-    #if 1
     uint8_t raw_md5[16];
     uint8_t hex_md5[MD5_SIZE + 1];
     uint8_t received_md5[MD5_SIZE + 1];
@@ -247,7 +246,6 @@ esp_loader_error_t esp_loader_flash_verify(int fd)
     md5_final(raw_md5);
     hexify(raw_md5, hex_md5);
 
-    printf("2=========================Actual:\n");
     printf("%s\n",(char*)hex_md5);
 
     loader_port_start_timer(timeout_per_mb(s_image_size, MD5_TIMEOUT_PER_MB));
@@ -256,26 +254,25 @@ esp_loader_error_t esp_loader_flash_verify(int fd)
 
     bool md5_match = memcmp(raw_md5, received_md5, MD5_SIZE) == 0;
 
-    {
-        printf("md5:=hex_md5\n");
-        for(int i = 0; i < MD5_SIZE; i++)
-        {
-            printf("=%02x",hex_md5[i]);
-        }
-        printf("md5:hex_md5\n");
-    }
-   
-       {
-        printf("raw_md5:=begin\n");
-        for(int i = 0; i < MD5_SIZE; i++)
-        {
-            printf("=%02x",raw_md5[i]);
-        }
-        printf("raw_md5\n");
-    }
+    //debug
+    // {
+    //     printf("md5:=hex_md5\n");
+    //     for(int i = 0; i < MD5_SIZE; i++)
+    //     {
+    //         printf("=%02x",hex_md5[i]);
+    //     }
+    //     printf("md5:hex_md5\n");
+    // }
 
-    printf("3Actual:\n");
-    printf("%s\n",(char*)received_md5);
+    //debug
+    // {
+    //     printf("raw_md5:=begin\n");
+    //     for(int i = 0; i < MD5_SIZE; i++)
+    //     {
+    //         printf("=%02x",raw_md5[i]);
+    //     }
+    //     printf("raw_md5\n");
+    // }
     
     if(!md5_match) {
         hex_md5[MD5_SIZE] = '\n';
@@ -291,42 +288,6 @@ esp_loader_error_t esp_loader_flash_verify(int fd)
     }
 
     return ESP_LOADER_SUCCESS;
-    #endif
-    #if 0
-    uint8_t raw_md5[16];
-    uint8_t hex_md5[33];
-    uint8_t received_md5[33];
-    uint8_t *compared_md5;
-    uint8_t md5_size;
-
-    md5_final(raw_md5);
-    hexify(raw_md5, hex_md5);
-
-    loader_port_start_timer(timeout_per_mb(s_image_size, MD5_TIMEOUT_PER_MB));
-
-    RETURN_ON_ERROR( loader_md5_cmd(fd, s_start_address, s_image_size, received_md5) );
-
-    compared_md5 = raw_md5;
-    md5_size = MD5_SIZE;
-    
-
-    bool md5_match = memcmp(compared_md5, received_md5, md5_size) == 0;
-    
-    if(!md5_match) {
-        compared_md5[md5_size] = '\n';
-        received_md5[md5_size] = '\n';
-
-        printf("Error: MD5 checksum does not match:\n");
-        printf("Expected:\n");
-        printf((char*)received_md5);
-        printf("Actual:\n");
-        printf((char*)compared_md5);
-
-        return ESP_LOADER_ERROR_INVALID_MD5;
-    }
-
-    return ESP_LOADER_SUCCESS;
-    #endif
 }
 
 #endif
