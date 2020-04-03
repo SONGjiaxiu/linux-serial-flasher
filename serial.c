@@ -97,6 +97,8 @@ int set_serial_para(int fd, unsigned int baud, int databit, int stopbit, int par
 {
     struct termios options;
 
+    bzero(&options, sizeof(options));
+
     if (fd == -1) {
         return(-1);
     }
@@ -213,9 +215,9 @@ int set_serial_para(int fd, unsigned int baud, int databit, int stopbit, int par
     options.c_lflag = 0;                                    /* 非加工方式 */
 
     options.c_iflag &= ~(ICRNL | IXON);
-// options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
+    // options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
 // options.c_lflag &= ~(ICANON | ECHO | ECHOE ); 
-    options.c_oflag &= ~OPOST; 
+    // options.c_oflag &= ~OPOST; 
 	
 
 
@@ -246,6 +248,7 @@ int serial_set_baudrate(int fd, unsigned int baud)
     struct termios options;
     struct termios old_options;
     unsigned int baudrate = B19200;
+    bzero(&options, sizeof(options));
 
     if (fd == -1) {
         return(-1);
@@ -294,9 +297,11 @@ int serial_set_baudrate(int fd, unsigned int baud)
     options.c_iflag |= IGNBRK;                              /* 忽略输入行的终止条件 */
     options.c_oflag = 0;                                    /* 非加工方式输出 */
     options.c_lflag = 0;                                    /* 非加工方式 */
-    // options.c_lflag &= ~(ICANON | ECHO | ECHOE); 
+
+    //options.c_lflag &= ~(ICANON | ECHO | ECHOE); 
+    // options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
     options.c_iflag &= ~(ICRNL | IXON);
-    options.c_oflag &= ~OPOST; 
+    // options.c_oflag &= ~OPOST; 
 
     if (tcsetattr( fd, TCSANOW, &options ) == -1){
         tcsetattr( fd, TCSANOW, &old_options );
@@ -335,7 +340,7 @@ ssize_t serial_read_n( int fd, const uint8_t *read_buffer, ssize_t read_size, ui
     FD_SET(fd,&readfds);
     nfds = select(fd+1, &readfds, NULL, NULL, &tv);
     if(nfds == 0) {
-        printf("timeout!\r\n");
+        printf("serial_read_n-timeout!\r\n");
     } else {
         nread = read(fd, (void *)read_buffer,read_size);
     }
@@ -401,6 +406,61 @@ ssize_t serial_read_n( int fd, const uint8_t *read_buffer, ssize_t read_size, ui
 
 ssize_t serial_write_n(int fd, const uint8_t *write_buffer, ssize_t write_size)
 {
+    int nfds;
+    ssize_t real_write_count = 0 ;
+    fd_set writefds;
+    struct timeval tv;
+
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+    
+    FD_ZERO(&writefds);
+    FD_SET(fd,&writefds);
+    nfds = select(fd+1,  NULL, &writefds, NULL, &tv);
+    if(nfds == 0) {
+        printf("serial_read_n-timeout!\r\n");
+    } else {
+        real_write_count = write(fd, write_buffer,write_size);
+    }
+
+    if (real_write_count < 0) {
+        perror( "write errot\n" );
+        return(-1);
+    }
+    
+    // printf("real_write_count:%ld\n",real_write_count);
+    // while ( tcdrain( fd ) == -1 );
+    // printf("real_write_count:%ld\n",real_write_count);
+
+    return real_write_count;
+
+
+    // ssize_t real_write_conut = 0; /* 实际写入的字节数 */
+    // ssize_t write_bytes = write_size;
+
+    // if (fd < 0) {
+    //     perror( "file description is valid" );
+    //     return(-1);
+    // }
+
+    // // if ((write_bytes > SERIAL_MAX_BUFFER) || (!write_bytes)) {
+    // //     return(-1);
+    // // }
+
+    // real_write_conut = write(fd, write_buffer, write_bytes);
+
+    // if (real_write_conut < 0) {
+    //     perror( "write errot\n" );
+    //     return(-1);
+    // }
+
+    // // while ( tcdrain( fd ) == -1 );
+    // return(real_write_conut);
+}
+
+#if 0
+ssize_t serial_write_n(int fd, const uint8_t *write_buffer, ssize_t write_size)
+{
     ssize_t real_write_conut = 0; /* 实际写入的字节数 */
     ssize_t write_bytes = write_size;
 
@@ -423,6 +483,7 @@ ssize_t serial_write_n(int fd, const uint8_t *write_buffer, ssize_t write_size)
     while ( tcdrain( fd ) == -1 );
     return(real_write_conut);
 }
+#endif
 
 esp_loader_error_t loader_port_serial_write(int fd, const uint8_t *data, uint16_t size)
 {

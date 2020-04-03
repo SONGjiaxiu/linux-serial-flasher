@@ -129,7 +129,6 @@ static esp_loader_error_t SLIP_send(int fd, const uint8_t *data, uint32_t size)
         } else {
             RETURN_ON_ERROR(serial_write(fd, BD_REPLACEMENT, 2) );
         }
-
         written = i + 1;
         to_write = 0;
     }
@@ -137,7 +136,7 @@ static esp_loader_error_t SLIP_send(int fd, const uint8_t *data, uint32_t size)
     if (to_write > 0) {
         RETURN_ON_ERROR( serial_write(fd, &data[written], to_write) );
     }
-
+printf("______line______%d\n",__LINE__);
     return ESP_LOADER_SUCCESS;
 }
 

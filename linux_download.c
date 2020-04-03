@@ -158,14 +158,15 @@ void parsing_config_doc_download(int fd, char *config_doc_path)
          printf("------addr----%s\n",store_para[store_addr_local[addr_local_times]]);
          printf("------command----%s\n",store_para[store_addr_local[addr_local_times] + 1]);
         
-        // sscanf(store_para[store_addr_local[addr_local_times]], "%x", &nValude); 
-        // linux_download_to_esp8266(fd, nValude, store_para[store_addr_local[addr_local_times] + 1]);
+        sscanf(store_para[store_addr_local[addr_local_times]], "%x", &nValude); 
+        linux_download_to_esp8266(fd, nValude, store_para[store_addr_local[addr_local_times] + 1]);
 
         //printf("----%0x----\n",nValude);
         //  printf("------command----%s\n",store_para[store_addr_local[addr_local_times] + 1]);
     }
 
 //debug
+#if 0
     {
 // ------addr----0x8000
 // ------command----partition_table/partition-table.bin
@@ -205,10 +206,10 @@ void parsing_config_doc_download(int fd, char *config_doc_path)
         // sscanf(store_para[store_addr_local[addr_local_times]], "%x", &nValude); 
         printf("linux_download_to_esp8266--%d--%s---\n",0x8000, "partition_table/partition-table.bin");
         linux_download_to_esp8266(fd, 0x8000, "partition_table/partition-table.bin");
-        sleep(1);
+        loader_port_delay_ms(21);
         printf("linux_download_to_esp8266--%d--%s---\n",0x9000, "ota_data_initial.bin");
         linux_download_to_esp8266(fd, 0x9000, "ota_data_initial.bin");
-        sleep(1);
+        loader_port_delay_ms(21);
         printf("linux_download_to_esp8266--%d--%s---\n",0x0, "bootloader/bootloader.bin");
         linux_download_to_esp8266(fd, 0x0, "bootloader/bootloader.bin");
         sleep(1);
@@ -218,5 +219,6 @@ void parsing_config_doc_download(int fd, char *config_doc_path)
         // printf("linux_download_to_esp8266--%d--%s---\n",0xF0000, "esp-at_customize.bin");
         // linux_download_to_esp8266(fd, 0xF0000, "esp-at_customize.bin");
     }
+#endif
     fclose(fp);
 }
