@@ -1,13 +1,10 @@
 
-#include <stdint.h>
-#include <sys/stat.h>
-#include "serial.h"
-#include "serial_comm.h"
+#include "linux_download.h"
 
 
-#define SERIAL_MAX_BLOCK  16384
-// #define SERIAL_MAX_BLOCK  45506
-#define MEM_MAX_BLOCK  1024
+// #define SERIAL_MAX_BLOCK  16384
+// // #define SERIAL_MAX_BLOCK  45506
+// #define MEM_MAX_BLOCK  1024
 #define FILE_MAX_BUFFER 1024
 #define LOAD_APP_ADDRESS_START 0x10000
 #define HIGHER_BAUD_RATE 921600
@@ -16,39 +13,11 @@
 #define STUB_CODE_DATA_ADDR_START 0x3FFFABA4
 
 #define ENTRY 0X4010E004
-
 #define ENABLE_STUB_LOADER 1
 
-static uint8_t compute_checksum(const uint8_t *data, uint32_t size)
-{
-    uint8_t checksum = 0xEF;
 
-    while (size--) {
-        checksum ^= *data++;
-    }
-
-    return checksum;
-}
-
-static FILE *get_file_size(char *path, ssize_t *image_size)
-{
-	//"./load_bin/project_template.bin"
-	FILE *fp = fopen(path, "r");
-	if(fp == NULL) {
-        printf("fopen fail!");
-        return (0);
-    }
-	fseek(fp, 0L, SEEK_END);
-    *image_size = ftell(fp);
-    rewind(fp);
-
-    printf("Image size: %lu\n", *image_size);
-
-    return fp;
-}
-
-static uint8_t payload_flash[SERIAL_MAX_BLOCK];
-static uint8_t payload_mem[MEM_MAX_BLOCK];
+// uint8_t payload_flash[SERIAL_MAX_BLOCK];
+// uint8_t payload_mem[MEM_MAX_BLOCK];
 
 int main()
 {
@@ -340,6 +309,10 @@ int main()
 
     loader_port_delay_ms(21);
 
+    // linux_download_to_esp8266(serial_fd, 0x10000, "./load_bin/esp8266/project_template.bin");
+    parsing_config_doc_download(serial_fd, "./download.config");
+
+#if 0
     //STEP4 flash interaction esp8266 stub loader
 #if ENABLE_STUB_LOADER
     int32_t packet_number = 0;
@@ -427,7 +400,7 @@ int main()
 
     fclose(image);
 #endif
-
+#endif
     serial_close(serial_fd);
     return (0);
 }

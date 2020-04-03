@@ -426,12 +426,12 @@ ssize_t serial_write_n(int fd, const uint8_t *write_buffer, ssize_t write_size)
 esp_loader_error_t loader_port_serial_write(int fd, const uint8_t *data, uint16_t size)
 {
     int write_len = serial_write_n(fd, data, size);
-    // printf("write_len:%d------------------\n",write_len);
-    // printf("write:data--------------------\n");
-    for(int i=0; i < size; i++) {
-        printf(" %02x ", data[i]);
-    }
-    printf("\n");
+    
+    //debug
+    // for(int i=0; i < size; i++) {
+    //     printf(" %02x ", data[i]);
+    // }
+    // printf("\n");
 
     if (write_len < 0) {
         return ESP_LOADER_ERROR_FAIL;
