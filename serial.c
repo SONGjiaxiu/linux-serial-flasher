@@ -215,7 +215,7 @@ int set_serial_para(int fd, unsigned int baud, int databit, int stopbit, int par
     options.c_iflag &= ~(ICRNL | IXON);
 // options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); 
 // options.c_lflag &= ~(ICANON | ECHO | ECHOE ); 
-// options.c_oflag &= ~OPOST; 
+    options.c_oflag &= ~OPOST; 
 	
 
 
@@ -296,6 +296,7 @@ int serial_set_baudrate(int fd, unsigned int baud)
     options.c_lflag = 0;                                    /* 非加工方式 */
     // options.c_lflag &= ~(ICANON | ECHO | ECHOE); 
     options.c_iflag &= ~(ICRNL | IXON);
+    options.c_oflag &= ~OPOST; 
 
     if (tcsetattr( fd, TCSANOW, &options ) == -1){
         tcsetattr( fd, TCSANOW, &old_options );

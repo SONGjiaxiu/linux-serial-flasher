@@ -15,5 +15,5 @@ uint8_t payload_mem[MEM_MAX_BLOCK];
 FILE *get_file_size(char *path, ssize_t *image_size);
 uint8_t compute_checksum(const uint8_t *data, uint32_t size);
 
-void linux_download_to_esp8266(int fd, int addr, char *path);
+esp_loader_error_t linux_download_to_esp8266(int fd, int addr, char *path);
 void parsing_config_doc_download(int fd, char *config_doc_path);

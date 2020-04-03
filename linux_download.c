@@ -30,7 +30,7 @@ FILE *get_file_size(char *path, ssize_t *image_size)
 }
 
 
-void linux_download_to_esp8266(int fd, int addr, char *path)
+esp_loader_error_t linux_download_to_esp8266(int fd, int addr, char *path)
 {
     esp_loader_error_t err;
     //STEP4 flash interaction esp8266 stub loader
@@ -75,8 +75,10 @@ void linux_download_to_esp8266(int fd, int addr, char *path)
     err = esp_loader_flash_verify(fd);
     if (err != ESP_LOADER_SUCCESS) {
         printf("MD5 does not match. err: %d\n", err);
+    } else {
+        printf("Flash verified success!\n");
     }
-    printf("Flash verified\n");
+    // printf("Flash verified\n");
     fclose(image);
 
 #elif
@@ -122,6 +124,7 @@ void linux_download_to_esp8266(int fd, int addr, char *path)
     fclose(image);
 #endif
 
+    return ESP_LOADER_SUCCESS;
 }
 
 
@@ -155,11 +158,65 @@ void parsing_config_doc_download(int fd, char *config_doc_path)
          printf("------addr----%s\n",store_para[store_addr_local[addr_local_times]]);
          printf("------command----%s\n",store_para[store_addr_local[addr_local_times] + 1]);
         
-        sscanf(store_para[store_addr_local[addr_local_times]], "%x", &nValude); 
-        linux_download_to_esp8266(fd, nValude, store_para[store_addr_local[addr_local_times] + 1]);
+        // sscanf(store_para[store_addr_local[addr_local_times]], "%x", &nValude); 
+        // linux_download_to_esp8266(fd, nValude, store_para[store_addr_local[addr_local_times] + 1]);
 
         //printf("----%0x----\n",nValude);
         //  printf("------command----%s\n",store_para[store_addr_local[addr_local_times] + 1]);
+    }
+
+//debug
+    {
+// ------addr----0x8000
+// ------command----partition_table/partition-table.bin
+// ------addr----0x9000
+// ------command----ota_data_initial.bin
+// ------addr----0x8000
+// ------command----partition_table/partition-table.bin
+// ------addr----0x9000
+// ------command----ota_data_initial.bin
+// ------addr----0x10000
+// ------command----esp-at.bin
+// ------addr----0xF0000
+// ------command----at_customize.bin
+// ------addr----0xF2000
+// ------command----customized_partitions/server_cert.bin
+// ------addr----0x106000
+// ------command----customized_partitions/mqtt_key.bin
+// ------addr----0xF4000
+// ------command----customized_partitions/server_key.bin
+// ------addr----0xF6000
+// ------command----customized_partitions/server_ca.bin
+// ------addr----0xFC000
+// ------command----customized_partitions/client_ca.bin
+// ------addr----0xF1000
+// ------command----customized_partitions/factory_param.bin
+// ------addr----0x104000
+// ------command----customized_partitions/mqtt_cert.bin
+// ------addr----0x108000
+// ------command----customized_partitions/mqtt_ca.bin
+// ------addr----0xF8000
+// ------command----customized_partitions/client_cert.bin
+// ------addr----0xFA000
+// ------command----customized_partitions/client_key.bin
+// ------addr----0x0
+// ------command----bootloader/bootloader.bin
+
+        // sscanf(store_para[store_addr_local[addr_local_times]], "%x", &nValude); 
+        printf("linux_download_to_esp8266--%d--%s---\n",0x8000, "partition_table/partition-table.bin");
+        linux_download_to_esp8266(fd, 0x8000, "partition_table/partition-table.bin");
+        sleep(1);
+        printf("linux_download_to_esp8266--%d--%s---\n",0x9000, "ota_data_initial.bin");
+        linux_download_to_esp8266(fd, 0x9000, "ota_data_initial.bin");
+        sleep(1);
+        printf("linux_download_to_esp8266--%d--%s---\n",0x0, "bootloader/bootloader.bin");
+        linux_download_to_esp8266(fd, 0x0, "bootloader/bootloader.bin");
+        sleep(1);
+        // printf("linux_download_to_esp8266--%d--%s---\n",0x10000, "esp-at.bin");
+        // linux_download_to_esp8266(fd, 0x10000, "esp-at.bin");
+        // sleep(1);
+        // printf("linux_download_to_esp8266--%d--%s---\n",0xF0000, "esp-at_customize.bin");
+        // linux_download_to_esp8266(fd, 0xF0000, "esp-at_customize.bin");
     }
     fclose(fp);
 }
